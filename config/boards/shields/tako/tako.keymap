@@ -30,7 +30,7 @@
 
         default_layer {
             bindings = <
-                &kp ESC    &mo FN     &kp C_AL_CALC         &kp EQUAL      &kp KP_LPAR     &kp KP_RPAR        &kp BSPC
+                &kp ESC    &mo FN     &kp C_AL_CALC         &kp EQUAL      &kp LEFT_PARENTHESIS     &&kp RIGHT_PARENTHESIS        &kp BSPC
                 &kp INS    &kp HOME   &kp PG_UP             &kp KP_NLCK    &kp KP_SLASH    &kp KP_MULTIPLY    &kp KP_MINUS
                 &kp DEL    &kp END     &kp PG_DN            &kp KP_N7      &kp KP_N8       &kp KP_N9          &kp KP_PLUS
                                                             &kp KP_N4      &kp KP_N5       &kp KP_N6    
