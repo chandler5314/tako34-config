@@ -62,3 +62,7 @@
     zephyr,input-positive = <NRF_SAADC_AIN5>; /* P0.29 */
   };
 };
+
+&blue_led {
+    gpios = <&gpio0 13 GPIO_ACTIVE_LOW>;
+};
