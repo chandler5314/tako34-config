@@ -63,6 +63,3 @@
   };
 };
 
-&blue_led {
-    gpios = <&gpio0 13 GPIO_ACTIVE_LOW>;
-};

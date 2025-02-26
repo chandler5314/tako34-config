@@ -34,15 +34,6 @@
   status = "disabled";
 };
 
-aliases {
-      led0 = &blue_led;
-};
-
-leds {
-    compatible = "gpio-leds";
-    blue_led: led_0 {
-    };
-};
 
 
 vbatt: vbatt {
