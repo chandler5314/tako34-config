@@ -36,11 +36,3 @@
 
 
 
-vbatt: vbatt {
-      compatible = "voltage-divider";
-      io-channels = <&adc 3>;
-      
-      output-ohms = <2000000>;
-      full-ohms = <(2000000 + 820000)>;
-};
-
