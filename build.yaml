@@ -15,4 +15,15 @@
 include:
   - board: nice_nano_v2
     shield: tako_left
-    cmake-args: -DZMK_EXTRA_MODULES="${GITHUB_WORKSPACE}/config/tako_drivers/"
+    artifact-name: tako_left_ec
+
+  - board: nice_nano_v2
+    shield: tako_left
+    snippet: enable_ec_calibrator
+    artifact-name: tako_left_ec_calibrator
+
+  - board: nice_nano_v2
+    shield: tako_left
+    snippet: enable_ec_calibrator
+    cmake-args: -DCONFIG_ZMK_KSCAN_EC_MATRIX_SETTINGS_INIT_LOAD=n
+    artifact-name: tako_left_ec_calibrator_no_load
