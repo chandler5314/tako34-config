@@ -20,10 +20,11 @@ include:
   - board: nice_nano//zmk
     shield: tako_left
     snippet: enable_ec_calibrator
-    artifact-name: tako_left_ec_calibrator
+    cmake-args: -DZMK_EXTRA_MODULES="${GITHUB_WORKSPACE}/config/tako_ec_autosave"
+    artifact-name: tako_left_ec_calibrator_autosave
 
   - board: nice_nano//zmk
     shield: tako_left
     snippet: enable_ec_calibrator
-    cmake-args: -DCONFIG_ZMK_KSCAN_EC_MATRIX_SETTINGS_INIT_LOAD=n
-    artifact-name: tako_left_ec_calibrator_no_load
+    cmake-args: -DZMK_EXTRA_MODULES="${GITHUB_WORKSPACE}/config/tako_ec_autosave" -DCONFIG_ZMK_KSCAN_EC_MATRIX_SETTINGS_INIT_LOAD=n
+    artifact-name: tako_left_ec_calibrator_autosave_no_load
