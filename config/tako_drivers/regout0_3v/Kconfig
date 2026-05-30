@@ -1,0 +1,4 @@
+config TAKO_REGOUT0_3V
+    bool "Tako nRF52840 REGOUT0 3.0V setup"
+    depends on SOC_NRF52840
+    default y if SHIELD_TAKO_LEFT
