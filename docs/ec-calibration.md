@@ -1,6 +1,6 @@
 # Tako34 EC calibration
 
-This branch uses Pete Johanson's `ec-support-zmk-module` EC matrix driver.
+This branch uses Pete Johanson's `ec-support-zmk-module` EC matrix driver, plus a small Tako helper shell command that saves calibration automatically after high-value sampling finishes.
 
 ## Why this branch changes ADC gain
 
@@ -10,12 +10,14 @@ The EC ADC channel now uses `ADC_GAIN_1_2` instead of `ADC_GAIN_1_6`. That multi
 
 ## Calibration flow
 
-1. Flash `tako_left_ec_calibrator_no_load.uf2` first if you may already have bad calibration data in flash.
+1. Flash `tako_left_ec_calibrator_autosave_no_load.uf2` first if you may already have bad calibration data in flash.
 2. Open the USB serial shell.
-3. Run `ec kscan calibration start`.
+3. Run `ecauto kscan calibration start`.
 4. During low sampling, do not press any key.
 5. During high sampling, slowly press each key in sequence and release only after `*` appears.
-6. Run `ec kscan calibration save`.
+6. Wait for `Calibration saved to flash.` before resetting or unplugging.
 7. Flash `tako_left_ec.uf2` for normal daily use.
+
+The old Pete command `ec kscan calibration start` is still present, but it still requires a manual `ec kscan calibration save`. Use `ecauto kscan calibration start` for this keyboard so the save happens automatically.
 
 If a specific key still never prints `*`, that key is probably below the equivalent `~683` old-scale detection level. In that case the next adjustment should be a small source patch to Pete's calibrator high threshold rather than changing `trigger-percentage`; `trigger-percentage` only affects normal scanning after calibration is already complete.
