@@ -12,6 +12,7 @@
 #include <zephyr/drivers/adc.h>
 #include <zephyr/drivers/kscan.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/util.h>
 #include <zmk/event_manager.h>
 #include <zmk/events/activity_state_changed.h>
 
@@ -32,6 +33,11 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
   KSCAN_GPIO_GET_BY_IDX(DT_DRV_INST(inst_idx), mux_sel_gpios, idx)
 
 #define INST_MATRIX_LEN(n) (INST_ROWS_LEN(n) * INST_COL_CHANNELS_LEN(n))
+
+#define KSCAN_EC_BASELINE_EMA_SHIFT 4
+#define KSCAN_EC_PRESS_CONFIRM_SCANS 3
+#define KSCAN_EC_RELEASE_CONFIRM_SCANS 2
+#define KSCAN_EC_MIN_MARGIN 35
 
 // clang-format off
 #if IS_ENABLED(CONFIG_SHIELD_TAKO_LEFT)
@@ -87,6 +93,9 @@ struct kscan_ec_data {
   struct k_timer work_timer;
   kscan_callback_t callback;
   bool *matrix_state;
+  uint16_t *idle_baseline;
+  uint8_t *press_count;
+  uint8_t *release_count;
 };
 
 struct kscan_ec_config {
@@ -116,6 +125,25 @@ static int state_index_rc(const struct kscan_ec_config *config, const int row,
   __ASSERT(col < config->cols, "Invalid col %i", row);
 
   return (row * config->cols) + col;
+}
+
+static uint16_t kscan_ec_margin_for_index(const int index) {
+  const uint16_t actuation = actuation_threshold[index];
+  const uint16_t release = release_threshold[index];
+  const uint16_t margin = actuation > release ? actuation - release : 50;
+
+  return MAX(margin, KSCAN_EC_MIN_MARGIN);
+}
+
+static uint16_t kscan_ec_baseline_update(const uint16_t baseline,
+                                         const uint16_t raw) {
+  if (baseline == 0) {
+    return raw;
+  }
+
+  const uint32_t weight = (1U << KSCAN_EC_BASELINE_EMA_SHIFT) - 1U;
+  return (uint16_t)(((uint32_t)baseline * weight + raw) >>
+                    KSCAN_EC_BASELINE_EMA_SHIFT);
 }
 
 static int kscan_ec_configure(const struct device *dev,
@@ -251,12 +279,52 @@ static void kscan_ec_work_handler(struct k_work *work) {
       const int index = state_index_rc(config, r, c);
       const bool pressed = data->matrix_state[index];
 
-      if (!pressed && matrix_read[index] > actuation_threshold[index]) {
-        data->matrix_state[index] = true;
-        data->callback(data->dev, r, c, true);
-      } else if (pressed && matrix_read[index] < release_threshold[index]) {
-        data->matrix_state[index] = false;
-        data->callback(data->dev, r, c, false);
+      if (matrix_read[index] < 0) {
+        continue;
+      }
+
+      const uint16_t raw = (uint16_t)matrix_read[index];
+      const uint16_t margin = kscan_ec_margin_for_index(index);
+
+      if (data->idle_baseline[index] == 0) {
+        data->idle_baseline[index] = raw;
+      }
+
+      const uint16_t baseline = data->idle_baseline[index];
+      const uint16_t dynamic_actuation =
+          MAX(actuation_threshold[index], baseline + margin);
+      const uint16_t dynamic_release =
+          MAX(release_threshold[index], baseline + (margin / 2));
+
+      if (!pressed) {
+        if (raw > dynamic_actuation) {
+          if (data->press_count[index] < KSCAN_EC_PRESS_CONFIRM_SCANS) {
+            data->press_count[index]++;
+          }
+
+          if (data->press_count[index] >= KSCAN_EC_PRESS_CONFIRM_SCANS) {
+            data->matrix_state[index] = true;
+            data->press_count[index] = 0;
+            data->release_count[index] = 0;
+            data->callback(data->dev, r, c, true);
+          }
+        } else {
+          data->press_count[index] = 0;
+          data->idle_baseline[index] = kscan_ec_baseline_update(baseline, raw);
+        }
+      } else if (raw < dynamic_release) {
+        if (data->release_count[index] < KSCAN_EC_RELEASE_CONFIRM_SCANS) {
+          data->release_count[index]++;
+        }
+
+        if (data->release_count[index] >= KSCAN_EC_RELEASE_CONFIRM_SCANS) {
+          data->matrix_state[index] = false;
+          data->press_count[index] = 0;
+          data->release_count[index] = 0;
+          data->callback(data->dev, r, c, false);
+        }
+      } else {
+        data->release_count[index] = 0;
       }
     }
   }
@@ -360,9 +428,15 @@ static const struct kscan_driver_api kscan_ec_api = {
       LISTIFY(INST_MUX_SELS_LEN(n), KSCAN_GPIO_MUX_SEL_CFG_INIT, (, ), n)};    \
                                                                                \
   static bool kscan_ec_matrix_state_##n[INST_MATRIX_LEN(n)];                   \
+  static uint16_t kscan_ec_idle_baseline_##n[INST_MATRIX_LEN(n)];              \
+  static uint8_t kscan_ec_press_count_##n[INST_MATRIX_LEN(n)];                 \
+  static uint8_t kscan_ec_release_count_##n[INST_MATRIX_LEN(n)];               \
                                                                                \
   static struct kscan_ec_data kscan_ec_data_##n = {                            \
       .matrix_state = kscan_ec_matrix_state_##n,                               \
+      .idle_baseline = kscan_ec_idle_baseline_##n,                             \
+      .press_count = kscan_ec_press_count_##n,                                 \
+      .release_count = kscan_ec_release_count_##n,                             \
   };                                                                           \
                                                                                \
   static struct kscan_ec_config kscan_ec_config_##n = {                        \
