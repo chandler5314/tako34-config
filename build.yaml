@@ -4,15 +4,26 @@
 # control, add individual board + shield combinations to
 # the `include` property, e.g:
 #
-# board: [ "nice_nano_v2" ]
+# board: [ "nice_nano//zmk" ]
 # shield: [ "corne_left", "corne_right" ]
 # include:
-#   - board: bdn9_rev2
-#   - board: nice_nano_v2
+#   - board: bdn9//zmk
+#   - board: nice_nano//zmk
 #     shield: reviung41
 #
 ---
 include:
-  - board: nice_nano_v2
+  - board: nice_nano//zmk
     shield: tako_left
-    cmake-args: -DZMK_EXTRA_MODULES="${GITHUB_WORKSPACE}/config/tako_drivers/"
+    artifact-name: tako_left_ec
+
+  - board: nice_nano//zmk
+    shield: tako_left
+    snippet: enable_ec_calibrator
+    artifact-name: tako_left_ec_calibrator
+
+  - board: nice_nano//zmk
+    shield: tako_left
+    snippet: enable_ec_calibrator
+    cmake-args: -DCONFIG_ZMK_KSCAN_EC_MATRIX_SETTINGS_INIT_LOAD=n
+    artifact-name: tako_left_ec_calibrator_no_load
