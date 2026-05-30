@@ -8,6 +8,10 @@ Pete's calibrator detects a pressed key during high-value sampling when the raw 
 
 The EC ADC channel now uses `ADC_GAIN_1_2` instead of `ADC_GAIN_1_6`. That multiplies the old EC raw readings by about `3`, so Pete's `2048` high-sampling gate is equivalent to about `683` in the previous scale.
 
+## Why trigger-percentage is 20
+
+Pete's normal scanning trigger uses a percentage between the calibrated low and high values. The default `50` means midpoint, which is too sensitive for this Tako34 and can leave a key falsely pressed after calibration. `20` puts the trigger point close to the calibrated high value, approximating the old `750` actuation and `700` release behavior when the high value is around `800` in the original scale.
+
 ## Calibration flow
 
 1. Flash `tako_left_ec_calibrator_autosave_no_load.uf2` first if you may already have bad calibration data in flash.
@@ -20,4 +24,4 @@ The EC ADC channel now uses `ADC_GAIN_1_2` instead of `ADC_GAIN_1_6`. That multi
 
 The old Pete command `ec kscan calibration start` is still present, but it still requires a manual `ec kscan calibration save`. Use `ecauto kscan calibration start` for this keyboard so the save happens automatically.
 
-If a specific key still never prints `*`, that key is probably below the equivalent `~683` old-scale detection level. In that case the next adjustment should be a small source patch to Pete's calibrator high threshold rather than changing `trigger-percentage`; `trigger-percentage` only affects normal scanning after calibration is already complete.
+If a specific key still never prints `*`, that key is probably below the equivalent `~683` old-scale detection level. The next adjustment should be lowering the calibration press gate in the EC driver itself while keeping the old ADC gain.
