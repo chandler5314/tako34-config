@@ -1,0 +1,5 @@
+config TAKO_BT_STATUS_LED
+    bool "Tako Bluetooth status LED"
+    depends on ZMK_BLE
+    select GPIO
+    default y if SHIELD_TAKO_LEFT

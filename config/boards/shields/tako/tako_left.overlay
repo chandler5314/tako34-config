@@ -19,6 +19,14 @@
     full-ohms = <2820000>;
   };
 
+  tako_status_leds: tako_status_leds {
+    compatible = "gpio-leds";
+
+    bt_status_led: bt_status_led {
+      gpios = <&gpio0 13 GPIO_ACTIVE_HIGH>;
+    };
+  };
+
   kscan: kscan {
     compatible = "zmk,kscan-gpio-ec";
     label = "KSCAN";
