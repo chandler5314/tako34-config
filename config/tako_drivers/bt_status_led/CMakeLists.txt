@@ -1,2 +1,4 @@
 zephyr_library_named(tako__bt_status_led)
+zephyr_library_include_directories(${CMAKE_SOURCE_DIR}/include)
+zephyr_library_include_directories(${CMAKE_SOURCE_DIR}/module/include/zmk)
 zephyr_library_sources_ifdef(CONFIG_TAKO_BT_STATUS_LED bt_status_led.c)
