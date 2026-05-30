@@ -1,0 +1,2 @@
+rsource "regout0_3v/Kconfig"
+rsource "bt_led_force/Kconfig"

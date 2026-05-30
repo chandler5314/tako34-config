@@ -1,0 +1,2 @@
+zephyr_library_named(tako__regout0_3v)
+zephyr_library_sources_ifdef(CONFIG_TAKO_REGOUT0_3V regout0_3v.c)

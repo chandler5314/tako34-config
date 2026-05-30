@@ -1,0 +1,2 @@
+zephyr_library_named(tako__bt_led_force)
+zephyr_library_sources_ifdef(CONFIG_TAKO_BT_LED_FORCE_ON bt_led_force.c)
