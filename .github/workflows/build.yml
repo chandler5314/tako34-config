@@ -1,5 +1,71 @@
-on: [push, pull_request, workflow_dispatch]
+name: Build ZMK Config
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'config/**'
+      - 'CMakeLists.txt'
+      - '.github/workflows/build.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'config/**'
+      - 'CMakeLists.txt'
+  workflow_dispatch:
 
 jobs:
   build:
-    uses: zmkfirmware/zmk/.github/workflows/build-user-config.yml@main
+    name: Build Configuration
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      
+      - name: Build using ZMK workflow
+        uses: zmkfirmware/zmk/.github/workflows/build-user-config.yml@main
+        secrets:
+          discord_webhook: ${{ secrets.DISCORD_WEBHOOK }}
+
+  test:
+    name: Code Quality Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Install CMake
+        run: sudo apt-get update && sudo apt-get install -y cmake
+      
+      - name: Configure CMake
+        run: cmake -B build -S .
+      
+      - name: Build project
+        run: cmake --build build --verbose
+
+  lint:
+    name: Lint C Code
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Install cppcheck
+        run: sudo apt-get update && sudo apt-get install -y cppcheck
+      
+      - name: Run cppcheck
+        run: cppcheck --enable=all --suppress=missingIncludeSystem config/
+        continue-on-error: true
