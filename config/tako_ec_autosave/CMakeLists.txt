@@ -1,0 +1,3 @@
+if(CONFIG_ZMK_KSCAN_EC_MATRIX_CALIBRATOR AND CONFIG_ZMK_KSCAN_EC_MATRIX_SETTINGS AND CONFIG_SHELL)
+  target_sources(app PRIVATE src/ec_autosave_shell.c)
+endif()
