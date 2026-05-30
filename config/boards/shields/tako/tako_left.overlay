@@ -63,7 +63,8 @@
     matrix-relax-us = <3>;
     adc-read-settle-us = <1>;
 
-    trigger-percentage = <50>;
+    /* 20% from the high value approximates the old 750/700 actuation thresholds. */
+    trigger-percentage = <20>;
     active-polling-interval-ms = <2>;
     idle-polling-interval-ms = <20>;
     sleep-polling-interval-ms = <200>;
