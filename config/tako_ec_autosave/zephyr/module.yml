@@ -1,0 +1,3 @@
+name: tako_ec_autosave
+build:
+  cmake: .
