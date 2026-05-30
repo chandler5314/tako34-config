@@ -1,0 +1,2 @@
+Rebuild marker for source commit 606e8c24779d9b63480a713dde64c5d49efa5554.
+This file is outside the ZMK config paths and is only used to trigger GitHub Actions.
