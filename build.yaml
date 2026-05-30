@@ -16,4 +16,4 @@ include:
   - board: nice_nano//zmk
     shield: tako_left
     cmake-args: -DZMK_EXTRA_MODULES="${GITHUB_WORKSPACE}/config/tako_drivers/"
-    artifact-name: tako_left_original_anti_drift_battery
+    artifact-name: tako_left_original_anti_drift_battery_led_force_high

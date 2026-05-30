@@ -1,0 +1,4 @@
+config TAKO_BT_LED_FORCE_ON
+    bool "Tako Bluetooth LED force on"
+    select GPIO
+    default y if SHIELD_TAKO_LEFT
