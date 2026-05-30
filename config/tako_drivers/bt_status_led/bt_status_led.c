@@ -6,6 +6,7 @@
 #include <zephyr/init.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/util.h>
 
 #include <zmk/ble.h>
 #include <zmk/event_manager.h>
