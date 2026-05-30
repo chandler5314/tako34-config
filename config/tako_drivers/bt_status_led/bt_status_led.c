@@ -24,18 +24,16 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 #error "CONFIG_TAKO_BT_STATUS_LED requires a bt_status_led devicetree node"
 #endif
 
-#define SELF_TEST_ON_MS 80
-#define SELF_TEST_OFF_MS 80
-#define CONNECTED_PULSE_ON_MS 100
-#define CONNECTED_PULSE_OFF_MS 100
-#define PAIRING_BLINK_MS 200
-#define RECONNECT_ON_MS 100
-#define RECONNECT_OFF_MS 1500
+#define SELF_TEST_ON_MS 500
+#define SELF_TEST_OFF_MS 250
+#define CONNECTED_SOLID_MS 5000
+#define PAIRING_BLINK_MS 500
+#define RECONNECT_BLINK_MS 1000
 
 enum bt_status_led_pattern {
   BT_STATUS_LED_OFF,
   BT_STATUS_LED_SELF_TEST,
-  BT_STATUS_LED_CONNECTED_PULSE,
+  BT_STATUS_LED_CONNECTED_SOLID,
   BT_STATUS_LED_PAIRING,
   BT_STATUS_LED_RECONNECTING,
 };
@@ -99,18 +97,13 @@ static void bt_status_led_work_handler(struct k_work *work) {
     }
     break;
 
-  case BT_STATUS_LED_CONNECTED_PULSE:
-    if (!led_on && pulses_remaining > 0) {
+  case BT_STATUS_LED_CONNECTED_SOLID:
+    if (!led_on) {
       bt_status_led_set(true);
-      k_work_schedule(&bt_status_led_work, K_MSEC(CONNECTED_PULSE_ON_MS));
-    } else if (led_on) {
+      k_work_schedule(&bt_status_led_work, K_MSEC(CONNECTED_SOLID_MS));
+    } else {
       bt_status_led_set(false);
-      pulses_remaining--;
-      if (pulses_remaining == 0) {
-        current_pattern = BT_STATUS_LED_OFF;
-      } else {
-        k_work_schedule(&bt_status_led_work, K_MSEC(CONNECTED_PULSE_OFF_MS));
-      }
+      current_pattern = BT_STATUS_LED_OFF;
     }
     break;
 
@@ -120,13 +113,8 @@ static void bt_status_led_work_handler(struct k_work *work) {
     break;
 
   case BT_STATUS_LED_RECONNECTING:
-    if (led_on) {
-      bt_status_led_set(false);
-      k_work_schedule(&bt_status_led_work, K_MSEC(RECONNECT_OFF_MS));
-    } else {
-      bt_status_led_set(true);
-      k_work_schedule(&bt_status_led_work, K_MSEC(RECONNECT_ON_MS));
-    }
+    bt_status_led_set(!led_on);
+    k_work_schedule(&bt_status_led_work, K_MSEC(RECONNECT_BLINK_MS));
     break;
 
   case BT_STATUS_LED_OFF:
@@ -146,13 +134,19 @@ static void bt_status_led_update_state(void) {
     return;
   }
 
-  if (usb_connected || connected) {
-    if (!usb_connected && connected && !last_connected) {
-      bt_status_led_start_pattern(BT_STATUS_LED_CONNECTED_PULSE, 3);
-    } else {
+  if (usb_connected) {
+    bt_status_led_stop();
+    last_connected = connected;
+    return;
+  }
+
+  if (connected) {
+    if (!last_connected) {
+      bt_status_led_start_pattern(BT_STATUS_LED_CONNECTED_SOLID, 0);
+    } else if (current_pattern != BT_STATUS_LED_CONNECTED_SOLID) {
       bt_status_led_stop();
     }
-    last_connected = connected;
+    last_connected = true;
     return;
   }
 

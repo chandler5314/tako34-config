@@ -16,4 +16,4 @@ include:
   - board: nice_nano//zmk
     shield: tako_left
     cmake-args: -DZMK_EXTRA_MODULES="${GITHUB_WORKSPACE}/config/tako_drivers/"
-    artifact-name: tako_left_key7_soft_regout3v_bt_status_led
+    artifact-name: tako_left_key7_soft_regout3v_bt_led_logitech_v2
