@@ -9,6 +9,14 @@
 / {
   chosen {
     zmk,kscan = &kscan;
+    zmk,battery = &vbatt;
+  };
+
+  vbatt: vbatt {
+    compatible = "zmk,battery-voltage-divider";
+    io-channels = <&adc 3>;
+    output-ohms = <2000000>;
+    full-ohms = <2820000>;
   };
 
   kscan: kscan {
@@ -62,4 +70,3 @@
     zephyr,input-positive = <NRF_SAADC_AIN5>; /* P0.29 */
   };
 };
-
