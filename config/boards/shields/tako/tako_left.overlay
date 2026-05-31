@@ -14,7 +14,9 @@
 
   vbatt: vbatt {
     compatible = "zmk,battery-voltage-divider";
+    status = "okay";
     io-channels = <&adc 3>;
+    /* Lower leg is 2M; full path is 2M + 820K. */
     output-ohms = <2000000>;
     full-ohms = <2820000>;
   };
