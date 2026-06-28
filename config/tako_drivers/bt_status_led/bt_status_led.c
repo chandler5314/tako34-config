@@ -29,6 +29,7 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 #define CONNECTED_SOLID_MS 5000
 #define PAIRING_BLINK_MS 500
 #define RECONNECT_BLINK_MS 1000
+#define UNCONNECTED_BLINK_TIMEOUT_MS 60000
 
 enum bt_status_led_pattern {
   BT_STATUS_LED_OFF,
@@ -46,6 +47,7 @@ static bool led_on;
 static bool self_test_done;
 static bool last_connected;
 static uint8_t pulses_remaining;
+static int64_t unconnected_blink_started_at_ms;
 
 static void bt_status_led_set(bool on) {
   gpio_pin_set_dt(&bt_status_led, on ? 1 : 0);
@@ -60,6 +62,18 @@ static bool bt_status_led_usb_connected(void) {
 #endif
 }
 
+static bool bt_status_led_is_unconnected_pattern(enum bt_status_led_pattern pattern) {
+  return pattern == BT_STATUS_LED_PAIRING || pattern == BT_STATUS_LED_RECONNECTING;
+}
+
+static bool bt_status_led_unconnected_timeout_expired(void) {
+  if (!bt_status_led_is_unconnected_pattern(current_pattern)) {
+    return false;
+  }
+
+  return k_uptime_get() - unconnected_blink_started_at_ms >= UNCONNECTED_BLINK_TIMEOUT_MS;
+}
+
 static void bt_status_led_update_state(void);
 
 static void bt_status_led_start_pattern(enum bt_status_led_pattern pattern,
@@ -67,6 +81,11 @@ static void bt_status_led_start_pattern(enum bt_status_led_pattern pattern,
   k_work_cancel_delayable(&bt_status_led_work);
   current_pattern = pattern;
   pulses_remaining = pulses;
+  if (bt_status_led_is_unconnected_pattern(pattern)) {
+    unconnected_blink_started_at_ms = k_uptime_get();
+  } else {
+    unconnected_blink_started_at_ms = 0;
+  }
   bt_status_led_set(false);
   k_work_schedule(&bt_status_led_work, K_NO_WAIT);
 }
@@ -75,6 +94,7 @@ static void bt_status_led_stop(void) {
   k_work_cancel_delayable(&bt_status_led_work);
   current_pattern = BT_STATUS_LED_OFF;
   pulses_remaining = 0;
+  unconnected_blink_started_at_ms = 0;
   bt_status_led_set(false);
 }
 
@@ -108,11 +128,19 @@ static void bt_status_led_work_handler(struct k_work *work) {
     break;
 
   case BT_STATUS_LED_PAIRING:
+    if (bt_status_led_unconnected_timeout_expired()) {
+      bt_status_led_stop();
+      break;
+    }
     bt_status_led_set(!led_on);
     k_work_schedule(&bt_status_led_work, K_MSEC(PAIRING_BLINK_MS));
     break;
 
   case BT_STATUS_LED_RECONNECTING:
+    if (bt_status_led_unconnected_timeout_expired()) {
+      bt_status_led_stop();
+      break;
+    }
     bt_status_led_set(!led_on);
     k_work_schedule(&bt_status_led_work, K_MSEC(RECONNECT_BLINK_MS));
     break;
