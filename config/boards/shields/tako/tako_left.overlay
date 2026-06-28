@@ -17,9 +17,13 @@
     status = "okay";
     /* ZMK's divider driver treats this value as the SAADC AIN index. */
     io-channels = <&adc 5>;
-    /* BATTERYONOFF -> 820K -> BATTERY_MONITOR -> 2M -> GND. */
+    /*
+     * BATTERYONOFF -> 820K -> BATTERY_MONITOR -> 2M -> GND.
+     * Use a slightly lower effective full-ohms value based on measured
+     * Windows BAS readings at 4.043V/3.930V/3.916V.
+     */
     output-ohms = <2000000>;
-    full-ohms = <2820000>;
+    full-ohms = <2800000>;
   };
 
   tako_status_leds: tako_status_leds {
